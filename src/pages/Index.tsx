@@ -6,6 +6,7 @@ import { StatsCards } from "@/components/StatsCards";
 import { Charts } from "@/components/Charts";
 import { EquipmentData } from "@/types/equipment";
 import { calculateStats } from "@/utils/statsCalculator";
+import Iridescence from "@/components/Iridescence";
 
 const Index = () => {
   const [equipmentData, setEquipmentData] = useState<EquipmentData[]>([]);
@@ -13,9 +14,14 @@ const Index = () => {
   const stats = useMemo(() => calculateStats(equipmentData), [equipmentData]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen relative">
+      {/* Animated Background */}
+      <div className="fixed inset-0 z-0">
+        <Iridescence color={[0.4, 0.7, 0.9]} speed={0.5} amplitude={0.2} />
+      </div>
+
       {/* Header */}
-      <header className="bg-gradient-primary text-primary-foreground shadow-large">
+      <header className="relative z-10 bg-background/60 backdrop-blur-lg border-b border-border/50 text-foreground shadow-lg">
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
@@ -32,7 +38,7 @@ const Index = () => {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
+      <main className="relative z-10 container mx-auto px-4 py-8">
         <div className="space-y-8">
           {/* Upload Section */}
           <section>
@@ -78,7 +84,7 @@ const Index = () => {
       </main>
 
       {/* Footer */}
-      <footer className="border-t mt-16">
+      <footer className="relative z-10 border-t border-border/50 bg-background/60 backdrop-blur-lg mt-16">
         <div className="container mx-auto px-4 py-6 text-center text-sm text-muted-foreground">
           <p>Chemical Equipment Analyzer • Built with React & Chart.js</p>
         </div>
