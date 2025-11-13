@@ -35,13 +35,12 @@ export const EquipmentTable = ({ data }: EquipmentTableProps) => {
   };
 
   const filteredAndSortedData = useMemo(() => {
-    let filtered = data.filter((item) =>
-      Object.values(item).some((value) =>
-        value.toString().toLowerCase().includes(searchQuery.toLowerCase())
-      )
+    const loweredQuery = searchQuery.toLowerCase();
+    const filtered = data.filter((item) =>
+      Object.values(item).some((value) => value.toString().toLowerCase().includes(loweredQuery)),
     );
 
-    filtered.sort((a, b) => {
+    const sorted = [...filtered].sort((a, b) => {
       const aVal = a[sortKey];
       const bVal = b[sortKey];
 
@@ -58,11 +57,11 @@ export const EquipmentTable = ({ data }: EquipmentTableProps) => {
       return bStr.localeCompare(aStr);
     });
 
-    return filtered;
+    return sorted;
   }, [data, sortKey, sortOrder, searchQuery]);
 
   return (
-    <Card className="shadow-medium animate-fade-in">
+    <Card className="shadow-medium animate-fade-in opacity-75">
       <div className="p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-foreground">Equipment Data</h2>

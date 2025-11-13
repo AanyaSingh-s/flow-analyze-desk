@@ -49,7 +49,7 @@ export const Charts = ({ data, stats }: ChartsProps) => {
       {
         label: "Flowrate",
         data: data.slice(0, 10).map((item) => item.Flowrate),
-        backgroundColor: "rgba(59, 130, 246, 0.7)",
+        backgroundColor: "rgba(59, 130, 246, 0.9)",
         borderColor: "rgba(59, 130, 246, 1)",
         borderWidth: 1,
       },
@@ -104,7 +104,7 @@ export const Charts = ({ data, stats }: ChartsProps) => {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
-      <Card className="p-6 shadow-medium">
+      <Card className="p-6 shadow-medium opacity-75">
         <h3 className="text-lg font-semibold mb-4 text-foreground">
           Flowrate vs Pressure (Top 10)
         </h3>
@@ -113,7 +113,7 @@ export const Charts = ({ data, stats }: ChartsProps) => {
         </div>
       </Card>
 
-      <Card className="p-6 shadow-medium">
+      <Card className="p-6 shadow-medium opacity-75">
         <h3 className="text-lg font-semibold mb-4 text-foreground">
           Temperature Trend
         </h3>
@@ -122,7 +122,7 @@ export const Charts = ({ data, stats }: ChartsProps) => {
         </div>
       </Card>
 
-      <Card className="p-6 shadow-medium lg:col-span-2">
+      <Card className="p-6 shadow-medium lg:col-span-2 opacity-75">
         <h3 className="text-lg font-semibold mb-4 text-foreground">
           Equipment Type Distribution
         </h3>

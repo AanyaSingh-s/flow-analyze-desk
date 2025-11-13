@@ -1,123 +1,84 @@
-import { useState, useMemo, useEffect } from "react";
-import { FlaskConical } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { EquipmentData } from "@/types/equipment";
+import DashboardLayout from "@/components/dashboard/DashboardLayout";
+import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
+import HistoryPanel from "@/components/dashboard/HistoryPanel";
 import { CSVUploader } from "@/components/CSVUploader";
-import { EquipmentTable } from "@/components/EquipmentTable";
 import { StatsCards } from "@/components/StatsCards";
 import { Charts } from "@/components/Charts";
-import { EquipmentData } from "@/types/equipment";
+import { EquipmentTable } from "@/components/EquipmentTable";
 import { calculateStats } from "@/utils/statsCalculator";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/hooks/use-toast";
+import { useUploadHistory } from "@/contexts/UploadHistoryContext";
+import Iridescence from "@/components/Iridescence";
 
 const Dashboard = () => {
+  const { selectedRecord, history } = useUploadHistory();
   const [equipmentData, setEquipmentData] = useState<EquipmentData[]>([]);
-  const { user } = useAuth();
-  const { toast } = useToast();
+  const [activeFileName, setActiveFileName] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (selectedRecord) {
+      setEquipmentData(selectedRecord.data);
+      setActiveFileName(selectedRecord.fileName);
+    } else if (history.length === 0) {
+      setEquipmentData([]);
+      setActiveFileName(null);
+    }
+  }, [selectedRecord, history.length]);
 
   const stats = useMemo(() => calculateStats(equipmentData), [equipmentData]);
 
-  const handleDataLoaded = async (data: EquipmentData[]) => {
+  const handleDataLoaded = useCallback(({ data, fileName }: { data: EquipmentData[]; fileName: string }) => {
     setEquipmentData(data);
-
-    if (!user) return;
-
-    // Check if history is paused
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("is_history_paused")
-      .eq("user_id", user.id)
-      .single();
-
-    if (profile?.is_history_paused) {
-      toast({
-        title: "History paused",
-        description: "This upload was not saved to history",
-      });
-      return;
-    }
-
-    // Save to database
-    const { error } = await supabase.from("csv_uploads").insert({
-      user_id: user.id,
-      filename: "equipment_data.csv",
-      equipment_data: data as any,
-      stats: stats as any,
-    });
-
-    if (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to save upload history",
-      });
-    }
-  };
+    setActiveFileName(fileName);
+  }, []);
 
   return (
-    <div className="min-h-screen">
-      {/* Header */}
-      <header className="bg-background/60 backdrop-blur-lg border-b border-border/50 text-foreground shadow-lg">
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
-              <FlaskConical className="w-8 h-8" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold">Dashboard</h1>
-              <p className="text-primary-foreground/90 mt-1">
-                Upload and analyze your equipment data
-              </p>
-            </div>
+    <div className="relative">
+      <div className="fixed inset-0 -z-10 opacity-90">
+        <Iridescence color={[0.4, 0.7, 0.9]} speed={0.4} amplitude={0.18} />
+      </div>
+      <DashboardLayout
+        sidebar={<DashboardSidebar />}
+        title="Dashboard"
+        description={
+          activeFileName
+            ? `Viewing ${activeFileName} • ${equipmentData.length} records`
+            : "Upload a CSV file to explore your equipment data."
+        }
+        className="space-y-8"
+      >
+        <section id="uploads" className="space-y-4">
+          <h2 className="text-xl font-semibold">Upload new data</h2>
+          <p className="text-sm text-foreground">
+            Drop a CSV file to update your dashboard. History keeps the last 50 uploads so you can revisit them later.
+          </p>
+          <CSVUploader onDataLoaded={handleDataLoaded} />
+        </section>
+
+        <section id="overview" className="space-y-4">
+          <div className=" flex items-center justify-between gap-4">
+            <h2 className="text-xl font-semibold">Overview</h2>
+            {activeFileName ? <span className="text-sm text-muted-foreground">Current file: {activeFileName}</span> : null}
           </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
-        <div className="space-y-8">
-          {/* Upload Section */}
-          <section>
-            <CSVUploader onDataLoaded={handleDataLoaded} />
-          </section>
-
-          {/* Dashboard */}
-          {equipmentData.length > 0 && (
-            <>
-              {/* Stats Cards */}
-              <section>
-                <StatsCards stats={stats} />
-              </section>
-
-              {/* Charts */}
-              <section>
-                <Charts data={equipmentData} stats={stats} />
-              </section>
-
-              {/* Data Table */}
-              <section>
-                <EquipmentTable data={equipmentData} />
-              </section>
-            </>
-          )}
-
-          {/* Empty State */}
-          {equipmentData.length === 0 && (
-            <div className="text-center py-16 animate-fade-in">
-              <div className="inline-block p-6 bg-muted/30 rounded-full mb-4">
-                <FlaskConical className="w-16 h-16 text-muted-foreground" />
-              </div>
-              <h2 className="text-2xl font-semibold text-foreground mb-2">
-                No Data Loaded
-              </h2>
-              <p className="text-muted-foreground max-w-md mx-auto">
-                Upload a CSV file to start analyzing your chemical equipment data.
-                Your dashboard will appear here with interactive charts and tables.
-              </p>
+          {equipmentData.length > 0 ? (
+            <div className="space-y-6">
+              <StatsCards stats={stats} />
+              <Charts data={equipmentData} stats={stats} />
+              <EquipmentTable data={equipmentData} />
+            </div>
+          ) : (
+            <div className="rounded-lg border border-dashed border-border/60 bg-background/50 p-12 text-center text-sm text-muted-foreground">
+              Upload a CSV file or choose one from your history to see analytics and charts.
             </div>
           )}
-        </div>
-      </main>
+        </section>
+
+        <section id="history" className="opacity-60 space-y-4">
+          <h2 className="text-xl font-semibold">History</h2>
+          <HistoryPanel />
+        </section>
+      </DashboardLayout>
     </div>
   );
 };

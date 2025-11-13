@@ -39,7 +39,7 @@ export const StatsCards = ({ stats }: StatsCardsProps) => {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 animate-fade-in">
+    <div className="opacity-75 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 animate-fade-in">
       {cards.map((card, index) => {
         const Icon = card.icon;
         return (
