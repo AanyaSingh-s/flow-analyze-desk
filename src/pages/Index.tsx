@@ -53,7 +53,7 @@ const Index = () => {
                   Create your workspace
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" asChild className="border-white/30 text-black hover:bg-white/10">
+              <Button size="lg" variant="outline" asChild className="bg-slate-300 border-white/30 text-black hover:bg-white/10">
                 <Link to="/login">View dashboard</Link>
               </Button>
             </div>
@@ -121,7 +121,7 @@ const Index = () => {
       </main>
 
       <footer className="relative z-10 border-t border-white/10 bg-black/40 py-6 text-center text-sm text-white/60 backdrop-blur">
-        <p>© {new Date().getFullYear()} ChemFlow Analytics • Built with React, Chart.js, and love for data.</p>
+        <p>© {new Date().getFullYear()} ChemFlow Analytics • Built with React, Chart.js, and django.</p>
       </footer>
     </div>
   );

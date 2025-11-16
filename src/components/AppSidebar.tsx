@@ -1,9 +1,7 @@
 import { Home, History, LogOut, PauseCircle, PlayCircle } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
-import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useState } from "react";
+import { useUploadHistory } from "@/contexts/UploadHistoryContext";
 import { useToast } from "@/hooks/use-toast";
 import {
   Sidebar,
@@ -26,61 +24,22 @@ const menuItems = [
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
-  const location = useLocation();
-  const { signOut, user } = useAuth();
+  const { logout } = useAuth();
+  const { paused, togglePause } = useUploadHistory();
   const { toast } = useToast();
-  const [isHistoryPaused, setIsHistoryPaused] = useState(false);
-  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      if (!user) return;
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("is_history_paused")
-        .eq("user_id", user.id)
-        .single();
-
-      if (!error && data) {
-        setIsHistoryPaused(data.is_history_paused);
-      }
-    };
-
-    fetchProfile();
-  }, [user]);
-
-  const handleToggleHistory = async () => {
-    if (!user) return;
-    setLoading(true);
-
-    const { error } = await supabase
-      .from("profiles")
-      .update({ is_history_paused: !isHistoryPaused })
-      .eq("user_id", user.id);
-
-    if (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to update history setting",
-      });
-    } else {
-      setIsHistoryPaused(!isHistoryPaused);
-      toast({
-        title: isHistoryPaused ? "History resumed" : "History paused",
-        description: isHistoryPaused
-          ? "CSV uploads will now be saved"
-          : "CSV uploads will not be saved",
-      });
-    }
-    setLoading(false);
+  const handleToggleHistory = () => {
+    const nextPaused = !paused;
+    togglePause();
+    toast({
+      title: nextPaused ? "History paused" : "History resumed",
+      description: nextPaused ? "Uploads will not be saved until resumed." : "Uploads will now be captured again.",
+    });
   };
 
-  const handleSignOut = async () => {
-    await signOut();
+  const handleSignOut = () => {
+    logout();
   };
-
-  const isActive = (path: string) => location.pathname === path;
 
   return (
     <Sidebar className={collapsed ? "w-14" : "w-60"}>
@@ -113,14 +72,14 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton onClick={handleToggleHistory} disabled={loading}>
-                  {isHistoryPaused ? (
+                <SidebarMenuButton onClick={handleToggleHistory}>
+                  {paused ? (
                     <PlayCircle className="mr-2 h-4 w-4" />
                   ) : (
                     <PauseCircle className="mr-2 h-4 w-4" />
                   )}
                   {!collapsed && (
-                    <span>{isHistoryPaused ? "Resume History" : "Pause History"}</span>
+                    <span>{paused ? "Resume History" : "Pause History"}</span>
                   )}
                 </SidebarMenuButton>
               </SidebarMenuItem>

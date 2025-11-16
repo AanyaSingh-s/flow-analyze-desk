@@ -1,103 +1,114 @@
-import { FormEvent, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/AuthContext";
-import { Loader2, ShieldCheck } from "lucide-react";
+// src/pages/Login.tsx
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { authAPI } from "@/services/api";
 import Iridescence from "@/components/Iridescence";
+import { Button } from "@/components/ui/button";
+import { FlaskConical, ArrowLeft } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const Login = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const { login, loading } = useAuth();
-  const [email, setEmail] = useState("");
+  const { toast } = useToast();
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (event: FormEvent) => {
-    event.preventDefault();
-    setError(null);
-
-    if (!email || !password) {
-      setError("Enter your email and password to continue.");
-      return;
-    }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
 
     try {
-      setSubmitting(true);
-      await login(email, password);
-      const redirectTo = (location.state as { from?: { pathname: string } } | null)?.from?.pathname ?? "/dashboard";
-      navigate(redirectTo, { replace: true });
-    } catch (err) {
-      console.error(err);
-      setError("Unable to sign in. Please try again.");
+      const data = await authAPI.login(username, password);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("token", data.token);
+      
+      toast({
+        title: "Success",
+        description: "Logged in successfully!",
+      });
+      
+      navigate("/dashboard");
+    } catch (error: any) {
+      toast({
+        title: "Login Failed",
+        description: error.response?.data?.error || "Invalid credentials. Backend may not be running.",
+        variant: "destructive",
+      });
     } finally {
-      setSubmitting(false);
+      setLoading(false);
     }
   };
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center px-4 py-12">
-      <div className="fixed inset-0 -z-10 opacity-80">
-        <Iridescence color={[0.5, 0.4, 0.9]} speed={0.3} amplitude={0.22} />
+    <div className="relative min-h-screen flex items-center justify-center p-4">
+      <div className="fixed inset-0 -z-10 opacity-90">
+        <Iridescence color={[0.35, 0.65, 0.95]} speed={0.4} amplitude={0.15} />
       </div>
 
-      <div className="mx-auto w-full max-w-md">
-        <Card className="backdrop-blur bg-background/80 border-border/60 shadow-xl">
-          <CardHeader className="space-y-2 text-center">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-              <ShieldCheck className="h-6 w-6 text-primary" />
+      <div className="w-full max-w-md">
+        <div className="mb-6">
+          <Link 
+            to="/" 
+            className="inline-flex items-center gap-2 text-white/70 hover:text-white transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to home
+          </Link>
+        </div>
+
+        <div className="bg-background/90 backdrop-blur-xl rounded-2xl shadow-2xl p-8 border border-border/50">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="rounded-xl bg-primary/20 p-3">
+              <FlaskConical className="h-6 w-6 text-primary-foreground" />
             </div>
-            <CardTitle className="text-2xl font-semibold">Welcome back</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Sign in to access your dashboard and revisit past uploads.
+            <div>
+              <h1 className="text-2xl font-bold">Welcome Back</h1>
+              <p className="text-sm text-muted-foreground">Log in to your account</p>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">Username</label>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full px-4 py-2 border border-border rounded-lg bg-background/50 focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                required
+                placeholder="Enter your username"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-2 border border-border rounded-lg bg-background/50 focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                required
+                placeholder="Enter your password"
+              />
+            </div>
+
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full"
+            >
+              {loading ? "Logging in..." : "Log In"}
+            </Button>
+
+            <p className="text-center text-sm text-muted-foreground">
+              Don't have an account?{" "}
+              <Link to="/signup" className="text-primary hover:underline">
+                Sign up
+              </Link>
             </p>
-          </CardHeader>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <CardContent className="space-y-4">
-              <div className="space-y-2 text-left">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  autoComplete="email"
-                  placeholder="name@example.com"
-                  required
-                />
-              </div>
-              <div className="space-y-2 text-left">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  autoComplete="current-password"
-                  placeholder="••••••••"
-                  required
-                />
-              </div>
-              {error ? <p className="text-sm text-destructive">{error}</p> : null}
-            </CardContent>
-            <CardFooter className="flex flex-col gap-3">
-              <Button type="submit" className="w-full" disabled={submitting || loading}>
-                {(submitting || loading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Sign in
-              </Button>
-              <p className="text-center text-sm text-muted-foreground">
-                No account yet?{" "}
-                <Link to="/signup" className="font-medium text-primary hover:underline">
-                  Sign up
-                </Link>
-              </p>
-            </CardFooter>
           </form>
-        </Card>
+        </div>
       </div>
     </div>
   );

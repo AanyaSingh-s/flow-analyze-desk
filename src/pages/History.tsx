@@ -1,190 +1,162 @@
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { useMemo } from "react";
+import { FileText, PauseCircle, PlayCircle, Trash2 } from "lucide-react";
+import { format } from "date-fns";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trash2, Eye, FileText } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { format } from "date-fns";
 import { EquipmentTable } from "@/components/EquipmentTable";
 import { StatsCards } from "@/components/StatsCards";
 import { Charts } from "@/components/Charts";
-import { EquipmentData, EquipmentStats } from "@/types/equipment";
-
-interface Upload {
-  id: string;
-  filename: string;
-  uploaded_at: string;
-  equipment_data: any;
-  stats: any;
-}
+import Iridescence from "@/components/Iridescence";
+import { useUploadHistory } from "@/contexts/UploadHistoryContext";
+import { useToast } from "@/components/ui/use-toast";
+import { calculateStats } from "@/utils/statsCalculator";
 
 const History = () => {
-  const [uploads, setUploads] = useState<Upload[]>([]);
-  const [selectedUpload, setSelectedUpload] = useState<Upload | null>(null);
-  const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
+  const { history, selectedRecord, selectRecord, removeRecord, paused, togglePause, clearHistory } = useUploadHistory();
   const { toast } = useToast();
-
-  useEffect(() => {
-    fetchUploads();
-  }, [user]);
-
-  const fetchUploads = async () => {
-    if (!user) return;
-
-    const { data, error } = await supabase
-      .from("csv_uploads")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("uploaded_at", { ascending: false });
-
-    if (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to fetch upload history",
-      });
-    } else {
-      setUploads(data || []);
-    }
-    setLoading(false);
-  };
-
-  const handleDelete = async (id: string) => {
-    const { error } = await supabase.from("csv_uploads").delete().eq("id", id);
-
-    if (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to delete upload",
-      });
-    } else {
-      toast({
-        title: "Success",
-        description: "Upload deleted successfully",
-      });
-      fetchUploads();
-      if (selectedUpload?.id === id) {
-        setSelectedUpload(null);
-      }
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
-      </div>
-    );
-  }
+  const stats = useMemo(() => (selectedRecord ? calculateStats(selectedRecord.data) : null), [selectedRecord]);
 
   return (
-    <div className="min-h-screen">
-      <header className="bg-background/60 backdrop-blur-lg border-b border-border/50 text-foreground shadow-lg">
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
-              <FileText className="w-8 h-8" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold">Upload History</h1>
-              <p className="text-primary-foreground/90 mt-1">
-                View and manage your previously uploaded datasets
+    <div className="relative min-h-screen overflow-hidden bg-slate-950 text-white">
+      <div className="absolute inset-0 opacity-60">
+        <Iridescence color={[0.35, 0.65, 0.95]} speed={0.45} amplitude={0.2} />
+      </div>
+
+      <div className="relative z-10 mx-auto flex max-w-6xl flex-col gap-10 px-6 py-16">
+        <header className="space-y-3 text-center lg:text-left">
+          <div className="inline-flex items-center gap-3 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm text-white/70">
+            <FileText className="h-4 w-4 text-primary" />
+            Upload history & recovery
+          </div>
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="space-y-2">
+              <h1 className="text-4xl font-semibold">Track every CSV upload</h1>
+              <p className="text-white/70">
+                Browse previous datasets, restore them to the dashboard, or remove older entries.
               </p>
             </div>
+            <div className="flex flex-wrap gap-3">
+              <Button
+                variant="outline"
+                className="border-white/30 text-white hover:bg-white/10"
+                onClick={() => {
+                  const nextPaused = !paused;
+                  togglePause();
+                  toast({
+                    title: nextPaused ? "History paused" : "History resumed",
+                    description: nextPaused
+                      ? "Uploads will not be saved until you resume history."
+                      : "New uploads will be captured again.",
+                  });
+                }}
+              >
+                {paused ? <PlayCircle className="mr-2 h-4 w-4" /> : <PauseCircle className="mr-2 h-4 w-4" />}
+                {paused ? "Resume history" : "Pause history"}
+              </Button>
+              <Button
+                variant="destructive"
+                className="bg-red-500/80 hover:bg-red-500"
+                onClick={() => {
+                  clearHistory();
+                  toast({
+                    title: "History cleared",
+                    description: "All cached uploads have been removed.",
+                  });
+                }}
+                disabled={history.length === 0}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Clear history
+              </Button>
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Upload List */}
-          <div className="lg:col-span-1 space-y-4">
-            <h2 className="text-xl font-semibold mb-4">Recent Uploads</h2>
-            {uploads.length === 0 ? (
-              <Card>
-                <CardContent className="pt-6">
-                  <p className="text-center text-muted-foreground">No uploads yet</p>
-                </CardContent>
-              </Card>
-            ) : (
-              uploads.map((upload) => (
-                <Card
-                  key={upload.id}
-                  className={`cursor-pointer transition-colors ${
-                    selectedUpload?.id === upload.id ? "border-primary" : ""
-                  }`}
-                  onClick={() => setSelectedUpload(upload)}
-                >
-                  <CardHeader>
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <FileText className="w-4 h-4" />
-                      {upload.filename}
-                    </CardTitle>
-                    <CardDescription>
-                      {format(new Date(upload.uploaded_at), "PPp")}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex gap-2">
+        <div className="grid gap-8 lg:grid-cols-[320px_1fr]">
+          <Card className="border-white/10 bg-white/5 backdrop-blur">
+            <CardHeader>
+              <CardTitle className="text-lg">Recent uploads</CardTitle>
+              <CardDescription className="text-white/60">
+                {history.length > 0 ? "Select a dataset to inspect" : "Uploads you add will appear here"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-3">
+              {history.length === 0 ? (
+                <p className="text-sm text-white/60">No uploads yet.</p>
+              ) : (
+                history.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => selectRecord(item.id)}
+                    className={`rounded-xl border p-4 text-left transition ${
+                      selectedRecord?.id === item.id ? "border-primary bg-primary/10" : "border-white/10 hover:border-white/30"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between text-sm text-white/70">
+                      <span>{format(new Date(item.uploadedAt), "PPp")}</span>
+                      <span>{item.rowCount} rows</span>
+                    </div>
+                    <p className="mt-2 text-base font-semibold text-white">{item.fileName}</p>
+                    <div className="mt-3 flex items-center gap-3 text-xs text-white/60">
                       <Button
-                        variant="outline"
                         size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedUpload(upload);
+                        variant="ghost"
+                        className="h-7 px-2 text-white/80 hover:bg-white/10"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          selectRecord(item.id);
                         }}
                       >
-                        <Eye className="w-4 h-4 mr-1" />
-                        View
+                        View details
                       </Button>
                       <Button
-                        variant="destructive"
                         size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDelete(upload.id);
+                        variant="ghost"
+                        className="h-7 px-2 text-red-300 hover:bg-red-500/20"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          removeRecord(item.id);
+                          toast({
+                            title: "Upload removed",
+                            description: `${item.fileName} deleted from history.`,
+                          });
                         }}
                       >
-                        <Trash2 className="w-4 h-4 mr-1" />
                         Delete
                       </Button>
                     </div>
-                  </CardContent>
-                </Card>
-              ))
-            )}
-          </div>
+                  </button>
+                ))
+              )}
+            </CardContent>
+          </Card>
 
-          {/* Selected Upload Details */}
-          <div className="lg:col-span-2">
-            {selectedUpload ? (
+          <Card className="border-white/10 bg-white/5 p-6 backdrop-blur">
+            {selectedRecord ? (
               <div className="space-y-8">
                 <div>
-                  <h2 className="text-2xl font-bold mb-2">{selectedUpload.filename}</h2>
-                  <p className="text-muted-foreground">
-                    Uploaded on {format(new Date(selectedUpload.uploaded_at), "PPp")}
+                  <p className="text-sm uppercase tracking-wide text-white/60">Currently viewing</p>
+                  <h2 className="text-2xl font-semibold text-white">{selectedRecord.fileName}</h2>
+                  <p className="text-sm text-white/60">
+                    Added on {format(new Date(selectedRecord.uploadedAt), "PPpp")}
                   </p>
                 </div>
-
-                <StatsCards stats={selectedUpload.stats} />
-                <Charts data={selectedUpload.equipment_data} stats={selectedUpload.stats} />
-                <EquipmentTable data={selectedUpload.equipment_data} />
+                {stats ? (
+                  <>
+                    <StatsCards stats={stats} />
+                    <Charts data={selectedRecord.data} stats={stats} />
+                  </>
+                ) : null}
+                <EquipmentTable data={selectedRecord.data} />
               </div>
             ) : (
-              <Card className="h-full flex items-center justify-center">
-                <CardContent>
-                  <p className="text-center text-muted-foreground">
-                    Select an upload to view details
-                  </p>
-                </CardContent>
-              </Card>
+              <div className="flex h-full flex-col items-center justify-center text-center text-white/60">
+                <p>Select an upload from the left to see charts and tables.</p>
+              </div>
             )}
-          </div>
+          </Card>
         </div>
-      </main>
+      </div>
     </div>
   );
 };
