@@ -279,7 +279,7 @@ Contributions are welcome! Please follow these steps:
 
 Aanya Singh 
 
-- GitHub: [@AanyaSingh-s])
+- GitHub: [@AanyaSingh-s]
 
 ---
 
@@ -290,6 +290,7 @@ Aanya Singh
 - [ReportLab](https://www.reportlab.com/) for PDF generation
 
 ---
+
 
 
 
