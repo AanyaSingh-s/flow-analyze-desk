@@ -20,25 +20,25 @@
 
 ## Features
 
-### 📊 Data Analysis
+### Data Analysis
 - **CSV Upload & Parsing** — Drag-and-drop or browse to upload equipment data
 - **Real-time Statistics** — Automatic calculation of mean, median, std dev, min/max
 - **Equipment Distribution** — Visual breakdown by equipment type
 - **Interactive Charts** — Histogram, box plots, correlation analysis, trend lines
 
-### 📈 Visualizations
+### Visualizations
 - Flowrate vs Pressure comparisons
 - Temperature trend analysis
 - Equipment type distribution (Doughnut/Pie charts)
 - Metric-specific analysis (Flowrate, Pressure, Temperature)
 - Correlation scatter plots
 
-### 📄 Reporting
+### Reporting
 - **PDF Report Generation** — Export comprehensive analysis reports
 - **Upload History** — Track and revisit previous analyses (last 5 datasets)
 - **Data Preview** — View raw data with sorting and search
 
-### 🔐 Authentication
+### Authentication
 - User registration and login
 - Token-based authentication
 - Secure data isolation per user
@@ -159,7 +159,7 @@ python main.py
 
 ---
 
-## 📡 API Endpoints
+## API Endpoints
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
@@ -200,7 +200,7 @@ Reactor-R1,Reactor,200.0,120.5,180.2
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 ### Backend
 - **Django 4.x** — Web framework
@@ -248,7 +248,7 @@ VITE_API_URL=http://127.0.0.1:8000/api
 
 ---
 
-## 🧪 Running Tests
+## Running Tests
 
 ```bash
 # Backend tests
@@ -280,7 +280,7 @@ pyinstaller --onefile --windowed --name="ChemFlow" main.py
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please follow these steps:
 
@@ -294,7 +294,7 @@ Contributions are welcome! Please follow these steps:
 
 
 
-## 👤 Author
+## Author
 
 Aanya Singh 
 
@@ -302,7 +302,7 @@ Aanya Singh
 
 ---
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - [shadcn/ui](https://ui.shadcn.com/) for beautiful React components
 - [Chart.js](https://www.chartjs.org/) for interactive charts
@@ -310,6 +310,5 @@ Aanya Singh
 
 ---
 
-<p align="center">
-  Made with ❤️ for chemical engineers and data analysts
-</p>
+
+
