@@ -43,26 +43,7 @@
 - Token-based authentication
 - Secure data isolation per user
 
----
 
-## 🖼️ Screenshots
-
-<details>
-<summary>Click to view screenshots</summary>
-
-### Web Application
-| Dashboard | Charts | History |
-|-----------|--------|---------|
-| ![Dashboard](screenshots/web-dashboard.png) | ![Charts](screenshots/web-charts.png) | ![History](screenshots/web-history.png) |
-
-### Desktop Application
-| Main View | Statistics | Analysis |
-|-----------|------------|----------|
-| ![Desktop Main](screenshots/desktop-main.png) | ![Stats](screenshots/desktop-stats.png) | ![Analysis](screenshots/desktop-charts.png) |
-
-</details>
-
----
 
 ## Architecture
 
@@ -177,7 +158,7 @@ python main.py
 
 ---
 
-## 📋 CSV Format
+## CSV Format
 
 Your CSV file should contain the following columns:
 
@@ -225,7 +206,7 @@ Reactor-R1,Reactor,200.0,120.5,180.2
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
 ### Backend Environment Variables
 
@@ -309,6 +290,7 @@ Aanya Singh
 - [ReportLab](https://www.reportlab.com/) for PDF generation
 
 ---
+
 
 
 
